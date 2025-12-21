@@ -1,68 +1,63 @@
 <?php
-// admin/usuarios/eliminar.php
+// admin/trabajadores/eliminar.php
 require_once '../includes/database.php';
 session_start();
 
-// Verificar que sea administrador
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
-// Verificar que se pasó un ID
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: listar.php?mensaje=ID de usuario no válido&tipo=error");
+if (!isset($_GET['id']) || !is_numeric($_GET['id']) || !isset($_GET['ci'])) {
+    header("Location: index.php?error=invalid");
     exit();
 }
 
-$id_usuario = (int)$_GET['id'];
+$id_empleado = (int)$_GET['id'];
+$ci_empleado = $_GET['ci'];
 
-// Verificar que no sea el mismo usuario que está logueado
-if ($id_usuario == $_SESSION['usuario_id']) {
-    header("Location: listar.php?mensaje=No puedes eliminar tu propio usuario&tipo=error");
+// Obtener datos para mensaje
+$sql_info = "SELECT primer_nombre, primer_apellido FROM empleados WHERE id = ?";
+$stmt_info = $conn->prepare($sql_info);
+$stmt_info->bind_param("i", $id_empleado);
+$stmt_info->execute();
+$result_info = $stmt_info->get_result();
+
+if ($result_info->num_rows === 0) {
+    header("Location: index.php?error=notfound");
     exit();
 }
 
-// Verificar que no sea el único administrador
-$sql_check = "SELECT COUNT(*) as total_admins FROM usuarios WHERE rol = 'admin' AND id != ?";
-$stmt_check = $conn->prepare($sql_check);
-$stmt_check->bind_param("i", $id_usuario);
-$stmt_check->execute();
-$result_check = $stmt_check->get_result();
-$total_admins = $result_check->fetch_assoc()['total_admins'];
-$stmt_check->close();
+$empleado = $result_info->fetch_assoc();
+$nombre_completo = $empleado['primer_nombre'] . ' ' . $empleado['primer_apellido'];
+$stmt_info->close();
 
-if ($total_admins == 0) {
-    header("Location: listar.php?mensaje=No se puede eliminar el único administrador&tipo=error");
-    exit();
+// Iniciar transacción
+$conn->begin_transaction();
+
+try {
+    // Eliminar familiares primero
+    $sql_fam = "DELETE FROM familiares WHERE ci_trabajador = ?";
+    $stmt_fam = $conn->prepare($sql_fam);
+    $stmt_fam->bind_param("s", $ci_empleado);
+    $stmt_fam->execute();
+    $stmt_fam->close();
+    
+    // Eliminar empleado
+    $sql_emp = "DELETE FROM empleados WHERE id = ?";
+    $stmt_emp = $conn->prepare($sql_emp);
+    $stmt_emp->bind_param("i", $id_empleado);
+    $stmt_emp->execute();
+    $stmt_emp->close();
+    
+    $conn->commit();
+    
+    header("Location: index.php?success=" . urlencode("Trabajador eliminado: $nombre_completo"));
+    
+} catch (Exception $e) {
+    $conn->rollback();
+    header("Location: index.php?error=" . urlencode("Error al eliminar: " . $e->getMessage()));
 }
 
-// Obtener nombre del usuario para el mensaje
-$sql_nombre = "SELECT username FROM usuarios WHERE id = ?";
-$stmt_nombre = $conn->prepare($sql_nombre);
-$stmt_nombre->bind_param("i", $id_usuario);
-$stmt_nombre->execute();
-$result_nombre = $stmt_nombre->get_result();
-$usuario = $result_nombre->fetch_assoc();
-$username = $usuario['username'];
-$stmt_nombre->close();
-
-// Eliminar usuario
-$sql = "DELETE FROM usuarios WHERE id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $id_usuario);
-
-if ($stmt->execute()) {
-    $mensaje = "Usuario '$username' eliminado correctamente";
-    $tipo = "success";
-} else {
-    $mensaje = "Error al eliminar usuario: " . $conn->error;
-    $tipo = "error";
-}
-
-$stmt->close();
 $conn->close();
-
-header("Location: listar.php?mensaje=" . urlencode($mensaje) . "&tipo=" . $tipo);
 exit();
-?>
