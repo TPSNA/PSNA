@@ -1,0 +1,14 @@
+{
+    "name": "yonaiker/proyecto_saina",
+    "description": "proyecto saina para gestion de empleado",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Yonaiker\\ProyectoSaina\\": "src/"
+        }
+    },
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.2"
+    }
+}
