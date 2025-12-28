@@ -1,17 +1,32 @@
 <?php
-include 'conexion_bd.php';
-$municipioId = $_GET['municipio_id'];
+// usuario/php/parroquias.php
+include __DIR__ . '/../admin/includes/database.php';
 
-// Usa prepared statement para seguridad
-$stmt = mysqli_prepare($conexion, "SELECT id, nombre FROM parroquias WHERE municipio_id = ?");
-mysqli_stmt_bind_param($stmt, 'i', $municipioId);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+header('Content-Type: text/html; charset=utf-8');
 
-$options = '';
-while ($row = mysqli_fetch_assoc($result)) {
-    $options .= '<option value="' . $row['id'] . '">' . $row['nombre'] . '</option>';
+$municipio_id = $_GET['municipio_id'] ?? '';
+
+if (!empty($municipio_id) && is_numeric($municipio_id)) {
+    $sql = "SELECT id, nombre FROM parroquias WHERE municipio_id = ? ORDER BY nombre";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $municipio_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $options = '';
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $options .= "<option value='{$row['id']}'>{$row['nombre']}</option>";
+        }
+    } else {
+        $options = "<option value=''>No hay parroquias para este municipio</option>";
+    }
+    
+    echo $options;
+    $stmt->close();
+} else {
+    echo "<option value=''>Selecciona un municipio primero</option>";
 }
-echo $options;
-mysqli_stmt_close($stmt);
+
+$conn->close();
 ?>

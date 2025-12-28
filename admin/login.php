@@ -7,7 +7,7 @@ if (isset($_SESSION['username'])) {
     if ($_SESSION['rol'] == 'admin') {
         header("Location: index.php");
     } else {
-        header("Location: ../../html/bienvenida.php");
+        header("Location: ../usuario/index.php");
     }
     exit();
 }
@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if ($usuario['rol'] == 'admin') {
                     header("Location: index.php");
                 } else {
-                    header("Location: ../../html/bienvenida.php");
+                    header("Location: ../usuario/index.php");
                 }
                 exit();
             } else {
@@ -55,6 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -262,17 +263,6 @@ $conn->close();
             text-align: center;
         }
         
-        .debug-info {
-            font-size: 10px;
-            color: #666;
-            text-align: center;
-            margin-top: 10px;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-        }
-        
         @media (max-width: 480px) {
             .login-box { padding: 30px 20px; }
             .login-header h1 { font-size: 22px; }
@@ -294,7 +284,6 @@ $conn->close();
                 <?php echo $error; ?>
             </div>
         <?php endif; ?>
-        
         
         <form method="POST" action="" id="loginForm">
             <div class="form-group">
@@ -320,7 +309,7 @@ $conn->close();
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                
+            </div>
             
             <button type="submit" class="btn-login">
                 <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
@@ -329,6 +318,11 @@ $conn->close();
         
         <div class="login-footer">
             <div class="system-info">Sistema SAINA © <?php echo date('Y'); ?></div>
+            <div class="hint">
+                <strong>Usuarios de prueba:</strong><br>
+                • Admin: admin / admin123<br>
+                • Usuario: juangel / juangel123
+            </div>
         </div>
     </div>
     
@@ -352,12 +346,9 @@ $conn->close();
         
         // Auto-completar para pruebas
         document.getElementById('username').addEventListener('focus', function() {
-            if (!this.value) this.value = 'admin';
-        });
-        
-        document.getElementById('password').addEventListener('focus', function() {
-            if (!this.value && document.getElementById('username').value === 'admin') {
-                this.value = 'admin123';
+            if (!this.value) {
+                this.value = 'admin';
+                document.getElementById('password').value = 'admin123';
             }
         });
     </script>
