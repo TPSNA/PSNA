@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="2; url=http://localhost/proyecto_saina3/admin/login.php">
+    <title>SAINA - Redirigiendo al Sistema</title>
+    
+    <!-- Favicon simplificado - usa solo el archivo que tengas -->
+    <link rel="icon" type="image/x-icon" href="./imagenes/favicon.ico">
+    <!-- Si tienes el logo en PNG, también puedes usarlo -->
+    <link rel="icon" type="image/png" href="./imagenes/Logo SAINA Horizontal.png">
+    
+    <style>
+        /* Mantén los mismos estilos CSS de arriba */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #a8a0f9, #6162f4);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        
+        /* ... mantén el resto de los estilos ... */
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="./imagenes/Logo SAINA Horizontal.png" 
+             alt="SAINA Logo" 
+             class="logo-img">
+    </div>
+    
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p class="message">Redirigiendo al Sistema SAINA...</p>
+    </div>
+    
+    <a href="http://localhost/proyecto_saina3/admin/login.php" class="redirect-link">
+        Haz clic aquí si no eres redirigido automáticamente
+    </a>
+    
+    <div class="footer">
+        Sistema de Administración Integral de Nómina y Archivo
+    </div>
+    
+    <script>
+        setTimeout(function() {
+            window.location.href = "http://localhost/proyecto_saina3/admin/login.php";
+        }, 2000);
+    </script>
+</body>
+</html>

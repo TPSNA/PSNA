@@ -1,14 +1,14 @@
+
 <?php
-// usuario/index.php - DASHBOARD DEL USUARIO
+// admin/index.php - DASHBOARD HERMOSO Y MODERNO
 session_start();
 
-if (!isset($_SESSION['username']) || $_SESSION['rol'] !== 'usuario') {
-    header("Location: ../admin/login.php");
+if (!isset($_SESSION['username']) || $_SESSION['rol'] !== 'admin') {
+    header("Location: login.php");
     exit();
 }
 
 require_once 'includes/database.php';
-
 // Obtener estadísticas
 $sql_empleados = "SELECT COUNT(*) as total FROM empleados";
 $result_empleados = $conn->query($sql_empleados);
@@ -18,54 +18,71 @@ $sql_activos = "SELECT COUNT(*) as activos FROM empleados WHERE estatus = 'ACTIV
 $result_activos = $conn->query($sql_activos);
 $empleados_activos = $result_activos->fetch_assoc()['activos'];
 
+$empleados_inactivos = $total_empleados - $empleados_activos;
+
+// Obtener usuarios
+$sql_usuarios = "SELECT COUNT(*) as total FROM usuarios";
+$result_usuarios = $conn->query($sql_usuarios);
+$total_usuarios = $result_usuarios->fetch_assoc()['total'];
+
 // Actividad reciente
 $sql_recientes = "SELECT primer_nombre, primer_apellido, fecha_registro, estatus 
                  FROM empleados ORDER BY fecha_registro DESC LIMIT 5";
 $result_recientes = $conn->query($sql_recientes);
+
+// Definir rutas
+$ruta_formulario = '../../html/formulario1.php';
+$ruta_tabla = '../../html/tabla_datos.php';
+$ruta_excel = '../../php/excel.php';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio Usuario - SAINA</title>
+    <title>Dashboard Admin - SAINA</title>
+    <!-- Favicon agregado  -->
+    <link rel="icon" type="image/png" sizes="32x32" href="../imagenes/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="../imagenes/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="../imagenes/favicon.icoo">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-    --purple-start: #a8a0f9;
-    --blue-end: #6162f4;
-    --primary-color: #6a67f0;
-    --text-color: #333;
-    --light-text: #777;
-    --card-background: rgba(255, 255, 255, 0.95);
-    --shadow-light: rgba(0, 0, 0, 0.1);
-    --sidebar-width: 280px;
-    --header-height: 70px;
-    --transition: all 0.3s ease;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
-}
-
-body {
-    background: #F0F4F3;
-    color: var(--text-color);
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-.app-container {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* SIDEBAR */
+            --purple-start: #a8a0f9;
+            --blue-end: #6162f4;
+            --primary-color: #6a67f0;
+            --text-color: #333;
+            --light-text: #777;
+            --card-background: rgba(255, 255, 255, 0.95);
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-focus: rgba(106, 103, 240, 0.2);
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: #F0F4F3;
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* SIDEBAR */
 .sidebar {
     width: var(--sidebar-width);
     background: white;
@@ -116,109 +133,115 @@ body {
     font-size: 20px;
     letter-spacing: -0.5px;
 }
-
-/* EL RESTO DEL CÓDIGO CSS PERMANECE EXACTAMENTE IGUAL */
-
-.user-profile {
-    padding: 25px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.user-avatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
-    box-shadow: 0 5px 15px rgba(106, 103, 240, 0.3);
-}
-
-.user-info h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.user-role {
-    font-size: 12px;
-    color: var(--light-text);
-    background: rgba(106, 103, 240, 0.1);
-    padding: 3px 10px;
-    border-radius: 15px;
-    font-weight: 500;
-}
-
-.nav-menu {
-    padding: 20px 0;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px 25px;
-    color: var(--text-color);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    position: relative;
-    margin: 5px 0;
-}
-
-.nav-item:hover {
-    background: rgba(106, 103, 240, 0.05);
-    color: var(--primary-color);
-    border-left: 3px solid var(--primary-color);
-}
-
-.nav-item.active {
-    background: linear-gradient(90deg, rgba(106, 103, 240, 0.1), transparent);
-    color: var(--primary-color);
-    border-left: 3px solid var(--primary-color);
-}
-
-.nav-icon {
-    font-size: 18px;
-    width: 24px;
-    text-align: center;
-}
-
-.nav-text {
-    font-size: 14px;
-    font-weight: 500;
-    flex: 1;
-}
-
-.logout-section {
-    padding: 20px 25px;
-    border-top: 1px solid rgba(0,0,0,0.05);
-}
-
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: #ff6b6b;
-    text-decoration: none;
-    padding: 12px 15px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.logout-btn:hover {
-    background: rgba(255, 107, 107, 0.1);
-}
+        .user-profile {
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
         
-        /* CONTENIDO PRINCIPAL */
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 5px 15px rgba(106, 103, 240, 0.3);
+        }
+        
+        .user-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: var(--light-text);
+            background: rgba(106, 103, 240, 0.1);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        
+        .nav-menu {
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            margin: 5px 0;
+        }
+        
+        .nav-item:hover {
+            background: rgba(106, 103, 240, 0.05);
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(106, 103, 240, 0.1), transparent);
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .nav-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-text {
+            font-size: 14px;
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .nav-badge {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .logout-section {
+            padding: 20px 25px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #ff6b6b;
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        /* ===== CONTENIDO PRINCIPAL ===== */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -235,17 +258,17 @@ body {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: fadeIn 0.5s ease;
         }
         
-       .header-title h1 {
-        font-size: 28px;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
-        -webkit-background-clip: text;  /* For older WebKit-based browsers */
-        background-clip: text;          /* Standard property for modern browsers */
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
-}
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
         
         .header-subtitle {
             display: flex;
@@ -286,12 +309,13 @@ body {
             gap: 8px;
         }
         
-        /* ESTADÍSTICAS */
+        /* ===== ESTADÍSTICAS ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
+            animation: fadeIn 0.7s ease;
         }
         
         .stat-card {
@@ -346,24 +370,23 @@ body {
             color: var(--light-text);
         }
         
-       .stat-content h3 {
-        font-size: 36px;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
-        -webkit-background-clip: text;  /* For older WebKit-based browsers */
-        background-clip: text;          /* Standard property for modern browsers */
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 10px;
-    }
+        .stat-content h3 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--purple-start), var(--blue-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
         
         .stat-content p {
             color: var(--light-text);
             font-size: 14px;
         }
         
-        /* ACCIONES RÁPIDAS */
+        /* ===== ACCIONES RÁPIDAS ===== */
         .quick-actions-section {
-            margin-top: 30px;
+            animation: fadeIn 0.9s ease;
         }
         
         .section-header {
@@ -412,12 +435,30 @@ body {
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             transition: all 0.4s ease;
             border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
         
         .action-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(106, 103, 240, 0.2);
             border-color: var(--primary-color);
+        }
+        
+        .action-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(106, 103, 240, 0.03));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .action-card:hover::after {
+            opacity: 1;
         }
         
         .action-icon {
@@ -451,9 +492,10 @@ body {
             line-height: 1.6;
         }
         
-        /* ACTIVIDAD RECIENTE */
+        /* ===== ACTIVIDAD RECIENTE ===== */
         .recent-activity-section {
             margin-top: 50px;
+            animation: fadeIn 1.1s ease;
         }
         
         .activity-list {
@@ -527,10 +569,59 @@ body {
             color: #e74c3c;
         }
         
-        /* RESPONSIVE */
+        /* ===== ANIMACIONES ===== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* ===== EFECTOS DE FONDO ===== */
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .shape {
+            position: absolute;
+            background: linear-gradient(135deg, var(--purple-start), transparent);
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+        
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -150px;
+        }
+        
+        .shape-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -100px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 1200px) {
             .sidebar {
                 width: 80px;
+                overflow: visible;
             }
             
             .logo-text, .user-info, .nav-text, .logout-btn .nav-text {
@@ -539,6 +630,7 @@ body {
             
             .logo {
                 justify-content: center;
+                padding: 0;
             }
             
             .user-profile {
@@ -555,6 +647,13 @@ body {
             .nav-item {
                 justify-content: center;
                 padding: 20px 0;
+            }
+            
+            .nav-badge {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 8px;
             }
             
             .main-content {
@@ -620,8 +719,7 @@ body {
     </style>
 </head>
 <body>
-    
-   <!-- SIDEBAR -->
+    <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="logo">
@@ -642,57 +740,50 @@ body {
         </div>
         <div class="user-info">
             <h3><?php echo htmlspecialchars($_SESSION['username']); ?></h3>
-            <span class="user-role">Usuario</span>
+            <span class="user-role">Administrador</span>
         </div>
     </div>
         
         <!-- MENÚ DE NAVEGACIÓN -->
-    <nav class="nav-menu">
-        <a href="index.php" class="nav-item active">
-            <div class="nav-icon"><i class="fas fa-home"></i></div>
-            <div class="nav-text">Inicio</div>
-        </a>
+        <nav class="nav-menu">
+            <a href="index.php" class="nav-item active">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <div class="nav-text">Inicio</div>
+            </a>
+            
+            <a href="usuarios/listar.php" class="nav-item">
+                <div class="nav-icon"><i class="fas fa-users-cog"></i></div>
+                <div class="nav-text">Gestión de Usuarios</div>
+                <span class="nav-badge">Admin</span>
+            </a>
+            
+            <a href="trabajadores/index.php" class="nav-item">
+                 <div class="nav-icon"><i class="fas fa-user-tie"></i></div>
+                  <div class="nav-text">Gestionar Trabajadores</div>
+            </a>
+            
+            
+            
+        </nav>
         
-        <a href="trabajadores/index.php" class="nav-item">
-            <div class="nav-icon"><i class="fas fa-user-tie"></i></div>
-            <div class="nav-text">Gestionar Trabajadores</div>
-        </a>
-        
-        <a href="trabajadores/buscar.php" class="nav-item">
-            <div class="nav-icon"><i class="fas fa-search"></i></div>
-            <div class="nav-text">Buscar Trabajadores</div>
-        </a>
-        
-        <a href="trabajadores/formulario1.php" class="nav-item">
-            <!-- Cambiar icono a uno más apropiado para "Nuevo Trabajador" -->
-            <div class="nav-icon"><i class="fas fa-user-plus"></i></div>
-            <div class="nav-text">Nuevo Trabajador</div>
-        </a>
 
-         <a href="../../php/excel.php" class="nav-item" target="_blank">
-            <div class="nav-icon"><i class="fas fa-download"></i></div>
-            <div class="nav-text">Exportar Excel</div>
-        </a>
-        
-    </nav>
-    
-    <!-- CERRAR SESIÓN -->
-    <div class="logout-section">
-        <a href="../admin/logout.php" class="logout-btn">
-            <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
-            <div class="nav-text">Cerrar Sesión</div>
-        </a>
-    </div>
-</aside>
+        <!-- CERRAR SESIÓN -->
+        <div class="logout-section">
+            <a href="logout.php" class="logout-btn">
+                <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
+                <div class="nav-text">Cerrar Sesión</div>
+            </a>
+        </div>
+    </aside>
     
     <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content">
         <!-- HEADER SUPERIOR -->
-        <header class="top-header">
+        <header class="top-header fade-in">
             <div class="header-title">
                 <h1>
                     <i class="fas fa-tachometer-alt"></i>
-                    Panel de Usuario
+                    Panel de Control
                 </h1>
                 <div class="header-subtitle">
                     <span class="status-dot status-online"></span>
@@ -711,7 +802,7 @@ body {
         </header>
         
         <!-- ESTADÍSTICAS -->
-        <section class="stats-grid">
+        <section class="stats-grid fade-in">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
@@ -747,22 +838,38 @@ body {
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
-                        <i class="fas fa-file-export"></i>
+                        <i class="fas fa-user-clock"></i>
                     </div>
                     <div class="stat-trend">
-                        <i class="fas fa-download"></i>
-                        <span>Reportes</span>
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Inactivos</span>
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h3>Excel</h3>
-                    <p>Exportar datos</p>
+                    <h3><?php echo $empleados_inactivos; ?></h3>
+                    <p>Empleados Inactivos</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Usuarios</span>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h3><?php echo $total_usuarios; ?></h3>
+                    <p>Usuarios del Sistema</p>
                 </div>
             </div>
         </section>
         
         <!-- ACCIONES RÁPIDAS -->
-        <section class="quick-actions-section">
+        <section class="quick-actions-section fade-in">
             <div class="section-header">
                 <div class="section-title">
                     <div class="section-icon">
@@ -773,30 +880,31 @@ body {
             </div>
             
             <div class="actions-grid">
-                <!-- VER TRABAJADORES -->
-                <a href="trabajadores/index.php" class="action-card">
+                <!-- NUEVO USUARIO -->
+                <a href="usuarios/registrar.php" class="action-card">
                     <div class="action-icon">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-user-plus"></i>
                     </div>
                     <div class="action-content">
-                        <h3>Ver Trabajadores</h3>
-                        <p>Consulta todos los empleados registrados en el sistema</p>
+                        <h3>Nuevo Usuario</h3>
+                        <p>Crear una nueva cuenta de usuario en el sistema</p>
                     </div>
                 </a>
                 
-                <!-- BUSCAR TRABAJADORES -->
-                <a href="trabajadores/buscar.php" class="action-card">
+                <!-- GESTIONAR USUARIOS -->
+                <a href="usuarios/listar.php" class="action-card">
                     <div class="action-icon">
-                        <i class="fas fa-search"></i>
+                        <i class="fas fa-users-cog"></i>
                     </div>
                     <div class="action-content">
-                        <h3>Buscar Trabajadores</h3>
-                        <p>Busca empleados por nombre, cédula o cargo</p>
+                        <h3>Gestionar Usuarios</h3>
+                        <p>Ver, editar o eliminar usuarios del sistema</p>
                     </div>
                 </a>
+                
                 
                 <!-- EXPORTAR EXCEL -->
-                <a href="../usuario/php/excel.php" class="action-card" target="_blank">
+                <a href="<?php echo $ruta_excel; ?>" class="action-card" target="_blank">
                     <div class="action-icon">
                         <i class="fas fa-download"></i>
                     </div>
@@ -805,11 +913,21 @@ body {
                         <p>Descargar reporte completo en formato Excel</p>
                     </div>
                 </a>
+                
+                <a href="trabajadores/index.php" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-users-cog"></i>
+                     </div>
+                     <div class="action-content">
+                        <h3>Gestionar Trabajadores</h3>
+                        <p>Ver, editar o eliminar empleados registrados</p>
+                    </div>
+                </a>
             </div>
         </section>
         
         <!-- ACTIVIDAD RECIENTE -->
-        <section class="recent-activity-section">
+        <section class="recent-activity-section fade-in">
             <div class="section-header">
                 <div class="section-title">
                     <div class="section-icon">
@@ -847,7 +965,7 @@ body {
                         </div>
                         <div class="activity-content">
                             <div class="activity-title">No hay actividad reciente</div>
-                            <div class="activity-time">No se han registrado trabajadores recientemente</div>
+                            <div class="activity-time">Comienza registrando trabajadores para ver actividad aquí</div>
                         </div>
                     </li>
                 <?php endif; ?>
@@ -906,7 +1024,52 @@ body {
             // Actualizar cada minuto
             updateTime();
             setInterval(updateTime, 60000);
+            
+            // Verificar rutas
+            const links = document.querySelectorAll('a[href*="formulario1.php"], a[href*="tabla_datos.php"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    console.log(`Navegando a: ${this.href}`);
+                    // Aquí podrías agregar verificación de existencia del archivo
+                });
+            });
         });
+        
+        // Efecto de partículas (opcional)
+        function createParticles() {
+            const shapes = document.querySelector('.floating-shapes');
+            if (shapes) {
+                for (let i = 0; i < 5; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'shape';
+                    particle.style.width = Math.random() * 50 + 20 + 'px';
+                    particle.style.height = particle.style.width;
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.opacity = Math.random() * 0.05 + 0.02;
+                    particle.style.background = `linear-gradient(135deg, 
+                        rgba(${Math.random() * 100 + 155}, ${Math.random() * 100 + 155}, ${Math.random() * 100 + 255}, 0.5),
+                        transparent)`;
+                    particle.style.animation = `float ${Math.random() * 20 + 10}s infinite ease-in-out`;
+                    shapes.appendChild(particle);
+                }
+                
+                // Agregar animación de flotación
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes float {
+                        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                        25% { transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px) rotate(${Math.random() * 5}deg); }
+                        50% { transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px) rotate(${Math.random() * 5}deg); }
+                        75% { transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px) rotate(${Math.random() * 5}deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        // Iniciar partículas después de cargar
+        setTimeout(createParticles, 1000);
     </script>
 </body>
 </html>
